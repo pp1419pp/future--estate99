@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<script>
+    L_NO_TOUCH = false;
+    L_DISABLE_3D = false;
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.5.1/dist/leaflet.js"></script>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.5.1/dist/leaflet.css" />
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" />
+<link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css" />
+<link rel="stylesheet"
+    href="https://rawcdn.githack.com/python-visualization/folium/master/folium/templates/leaflet.awesome.rotate.css" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<style>
+    #map_a6073d0ef32e46208af726a1736154fe {
+        margin-top: 30px;
+        position: absolute;
+        width: 80%;
+        height: 80%;
+        left: 10.0%;
+        top: 10.0%;
+    }
+</style>
+
+
+<input type="hidden" name="city" id="city" value="{{city}}" />
+<input type="hidden" name="neighborhood" id="neighborhood" value="{{neighborhood}}" />
+<input type="hidden" name="type" id="type" value="{{type}}" />
+
+
+
+
+<div class="container">
+    <div class="row">
+        <div class="folium-map" id="map_a6073d0ef32e46208af726a1736154fe"></div>
+    </div>
+</div>
+
+
+
+
+<script>
+    var map_a6073d0ef32e46208af726a1736154fe = L.map(
+        "map_a6073d0ef32e46208af726a1736154fe",
+        {
+            center: [24.84, 46.65],
+            crs: L.CRS.EPSG3857,
+            zoom: 12.0,
+            zoomControl: true,
+            preferCanvas: false,
+        }
+    );
+    var tile_layer_a5aac8c85b6f49eeafb84004c0e241e4 = L.tileLayer(
+        "https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png",
+        { "attribution": "\u0026copy; \u003ca href=\"http://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors \u0026copy; \u003ca href=\"http://cartodb.com/attributions\"\u003eCartoDB\u003c/a\u003e, CartoDB \u003ca href =\"http://cartodb.com/attributions\"\u003eattributions\u003c/a\u003e", "detectRetina": false, "maxNativeZoom": 18, "maxZoom": 18, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false }
+    ).addTo(map_a6073d0ef32e46208af726a1736154fe);
+
+    $(document).ready(function () {
+        // executes when HTML-Document is loaded and DOM is ready
+        //alert("document is ready");
+        //Load_Marker();
+    });
+    $(window).load(function () {
+        // executes when complete page is fully loaded, including all frames, objects and images
+        //alert("window is loaded");
+        Load_Marker();
+    });
+    function Load_Marker() {
+        var city = $("#city").val();
+        var neighborhood = $("#neighborhood").val();
+        var type = $("#type").val();
+        var server_data = [
+            { "city": city },
+            { "neighborhood": neighborhood },
+            { "type": type },
+        ];
+        $.ajax({
+            type: "POST",
+            url: "/getDataMap",
+            dataType: 'json',
+            data: JSON.stringify(server_data),
+            contentType: "application/json",
+            success: function (data) {
+                //alert (JSON.parse(data))      
+                $.each(JSON.parse(data), function (index, item) {
+                    var marker_877834ee72cc4f119a79185ddd36aefb = L.marker(
+                        [item['latitude'], item['longitude']],
+                        {}
+                    ).addTo(map_a6073d0ef32e46208af726a1736154fe);
+                    var icon_506e9a0c8244452ab2246370c6a8e413 = L.AwesomeMarkers.icon(
+                        {
+                            "extraClasses": "fa-rotate-5",
+                            "icon": "map-pin",
+                            "iconColor": "white",
+                            "iconSize": [25, 25],
+                            "markefrColor": "green",
+                            "prefix": "fa"
+                        }
+                    );
+                    var pices =  item['pices'].trim();
+                    var  scheme = item['scheme'].trim();
+                    marker_877834ee72cc4f119a79185ddd36aefb.setIcon(icon_506e9a0c8244452ab2246370c6a8e413);
+                    var popup_2b2f97ef648e4954b99110532ea56598 = L.popup({ "autopan": "False", "maxWidth": "100%" });
+                    var html_40ecc3e1f1664599b055691c865ab50b =
+                        $(`<div class="card text-end" style="width: 18rem;" id="html_40ecc3e1f1664599b055691c865ab50b">
+                        <div class="card-body">
+                            <h5 class="card-title">المدينه : ` + item['city'] + `</h5>
+                            <h5 class="card-subtitle">القطعه : ` + item['pices'] + ` </h5>
+                            <h5 class="card-text">السعر الحالي : ` + item['price_square_meter'] + ` </h5>
+                            <h5 class="card-subtitlemb-2 text-muted">  السعر المتوقع : ` + parseFloat(item['predict']).toFixed(2) + ` </h5>                                                                                      
+                            <div class="text-center" id="Visulation">                               
+                            </div>                           
+                            <a href="#" id="getService" class="btn btn-outline-primary btn-sm"  onClick="GetService(`+ item['latitude'] + ` ,` + item['longitude'] + ` );">الخدمات</a>                                                        
+                        </div>
+                    </div>`)[0];
+                    popup_2b2f97ef648e4954b99110532ea56598.setContent(html_40ecc3e1f1664599b055691c865ab50b);
+                    marker_877834ee72cc4f119a79185ddd36aefb.bindPopup(popup_2b2f97ef648e4954b99110532ea56598);
+                });
+            }
+        });
+    }
+
+
+
+    // markers storage
+    var markers = [];
+    function GetService(lat, log) {
+        //alert("You clicked the map at LAT: "+ lat+" and LONG: "+log );
+        var server_data = [
+            { "lat": lat, "log": log },
+        ];
+        if (markers && markers.length) {
+            RemoveMarker();
+        }
+        var i = 0;
+        $.ajax({
+            type: "POST",
+            url: "/getServiceLoation",
+            dataType: 'json',
+            data: JSON.stringify(server_data),
+            contentType: "application/json",
+            success: function (data) {
+                $.each(data, function (key, value) {
+                    $.each(value, function (key, value) {
+                        //alert (value['distance']);
+                        if (value['distance'] < 5000) {
+                            title = value["title"];
+                            categories = value['categories'][0]['name'];
+                            distance = value['distance'];
+                            lat = value['position']['lat'];
+                            lng = value['position']['lng'];
+                            //var marker_877834ee72cc4f119a79185ddd36aefb = L.marker(
+                            window['marker' + i] = L.marker(
+                                [lat, lng],
+                                {}
+                            ).addTo(map_a6073d0ef32e46208af726a1736154fe);
+                            var icon_506e9a0c8244452ab2246370c6a8e413 = L.AwesomeMarkers.icon(
+                                {
+                                    "extraClasses": "fa-rotate-45",
+                                    "icon": "map-pin",
+                                    "iconColor": "white",
+                                    "iconSize": [30, 30],
+                                    "markerColor": "green",
+                                    "prefix": "fa",
+                                    "opacity": 0.5,
+                                }
+                            );
+                            window['marker' + i].setIcon(icon_506e9a0c8244452ab2246370c6a8e413);
+                            var popup_2b2f97ef648e4954b99110532ea56598 = L.popup({ "autopan": "False", "maxWidth": "100%" });
+                            var html_40ecc3e1f1664599b055691c865ab50b =
+                                $(`<div class="card text-end" style="width: 18rem;" id="html_40ecc3e1f1664599b055691c865ab50b">
+                                <div class="card-body">
+                                    <h4 class="card-title">` + categories + `</h4>
+                                    <h5 class="card-subtitle mb-2 text-muted">` + title + `</h5>
+                                    <h5 class="card-subtitle mb-2 text-muted">المسافة بالمتر:` + distance + `</h5>                                    
+                                </div>
+                            </div>`)[0];
+                            popup_2b2f97ef648e4954b99110532ea56598.setContent(html_40ecc3e1f1664599b055691c865ab50b);
+                            window['marker' + i].bindPopup(popup_2b2f97ef648e4954b99110532ea56598);
+
+                            markers.push(window['marker' + i]);
+                            i++;
+                        }
+                    });
+                });
+            }
+        });
+    }
+
+
+    function RemoveMarker(e) {
+        // remove previous marker
+        if (markers && markers.length) {
+            for (var i = 0; i < markers.length; i++) {
+                map_a6073d0ef32e46208af726a1736154fe.removeLayer(markers[i]);
+            }
+            while (markers.length > 0) {
+                markers.pop();
+            }
+        } else {
+            alert("length equl zero");
+        }
+    }
+
+
+
+
+    //============================================================
+    function getPredictPrice(pices, scheme) {
+        var server_data = [
+            { "scheme": scheme },
+            { "pices": pices },
+        ];
+        $.ajax({
+            type: "POST",
+            url: "/getVisualtionPricePridect",
+            dataType: 'json',
+            data: JSON.stringify(server_data),
+            contentType: "application/json",
+            success: function (data) {
+                const line_labels = [];
+                const line_values = [];
+                //$.each(JSON.parse(data), function (i, item) {
+                $.each(data, function (i, item) {
+                    line_labels.push(item.date);
+                    line_values.push(item.price_sr / 1000000);
+                });
+
+                $('#canvas').remove();
+                //$('iframe.chartjs-hidden-iframe').remove();
+                $('#Visulation').append('<canvas id="canvas" />');
+                var ctx = document.getElementById("canvas");
+                var dat = {
+                    labels: line_labels,
+                    datasets: [
+                        {
+                            label: "visualization for prediction",
+                            fillColor: "rgba(110,110,10,0.2)",
+                            strokeColor: "rgba(220,220,220,1)",
+                            pointColor: "rgba(220,220,220,1)",
+                            pointStrokeColor: "#fcf",
+                            pointHighlightFill: "#fff",
+                            pointHighlightStroke: "rgba(220,220,220,1)",
+                            data: line_values
+
+                        }
+                    ]
+                };
+                var myNewChart = new Chart(ctx, {
+                    type: "line",
+                    data: dat,
+                });
+
+            }
+        });
+    }
+
+</script>
+{% endblock %}

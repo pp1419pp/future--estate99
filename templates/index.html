@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    .home {
+        min-height: 100vh;
+        background: url(../static/images/home-bg.jpg) no-repeat;
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+<!-- home section starts  -->
+<section class="container" id="home">
+    <form action="{{ url_for('getDetials') }}" method="post">
+        <div class="inputBox">
+            <div class="d-grid gap-2 col-6 mx-auto text-center" style="margin-top: 120px;">
+                <h3>عرض الصفقات والسعر المتوقع</h3>
+            </div>
+
+            <div class="row" style="margin-top: 20px;">
+                <div class="col">
+                    <select name="type" id="type" class="form-select" aria-label="Default select example">
+                        <option value="" disabled hidden selected> أختر نوع العقار</option>
+                        <option value="1"> ارض</option>
+                        <option value="0"> بيت</option>
+                    </select>
+                
+                </div>
+                <div class="col">
+                    <select name="neighborhood" id="neighborhood" class="form-select"
+                        aria-label="Default select example">
+                        <option value="" disabled hidden selected>أختر الحي</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <select name="city" id="city" class="form-select" aria-label="Default select example">
+                        <option value="" disabled hidden selected>أختر المدينه</option>
+                        <!-- {% for c in city %}
+                        <option value="{{ c.id }}">
+                            {{ c.cityName }}
+                        </option>
+                        {% endfor %} -->
+                    </select>
+                </div>
+            </div>
+            <div class="d-grid gap-2 col-6 mx-auto" style="margin-top:40px;">
+                <input type="submit" value="عرض التوقع للاحياء على الخريطه" class="btn btn-primary">
+            </div>
+        </div>
+    </form>
+</section>
+
+<!--Visulation Max   -->
+<section class="container text-center" id="Visulation">    
+  
+</section>
+<br>
+<!-- Visulation Count  -->
+<section class="container text-center" id="VisulationCount">      
+</section>
+
+<!-- Visualtion Count City   -->
+<section class="container text-center" id="VisualtionCountCity">      
+</section>
+<div class="result" align="center " style="margin-top: 20px;">
+    {% if result %} {% for variable, value in original_input.items() %}
+    <b>{{ variable }}</b> : {{ value }} {% endfor %}
+    <br>
+    <br>
+    <h1>Predicted House Price:</h1>
+    <p style="font-size:50px">${{ result }}</p>
+    {% endif %}
+</div>
+<!-- agents section ends -->
+
+
+<script>   
+    Load_City();    
+    $("#type").change(function (e) {
+        e.preventDefault();
+        var selectedCity = $("#city  option:selected").val();
+        var selectedNeighborhood = $("#neighborhood  option:selected").val();
+        var selectedtype = $("#type  option:selected").val();
+        var server_data = [
+            { "city": selectedCity },
+            { "neighborhood": selectedNeighborhood },
+            { "type": selectedtype },
+        ];
+
+        $.ajax({
+            type: "POST",
+            url: "/getVisualtion",
+            dataType: 'json',
+            data: JSON.stringify(server_data),
+            contentType: "application/json",
+            success: function (data) {               
+                const line_labels = [];
+                const line_values = [];                               
+                $.each(data, function (i, item) {
+                    line_labels.push(item.neighborhood);
+                    line_values.push(item.price_sr / 1000000);
+                });
+                $('#canvas1').remove();              
+                $('#Visulation').append('<canvas id="canvas1" width=100 height=40 />');
+                var ctx = document.getElementById("canvas1");                                
+                var dat = {                    
+                    labels: line_labels,
+                    datasets: [
+                        {
+                            label: "visualization between prices and neighborhood",
+                            fillColor: "rgba(110,110,10,0.2)",
+                            strokeColor: "rgba(220,220,220,1)",
+                            pointBorderColor: "rgba(187,91,105,0.92)",
+                            pointStrokeColor: "#fcf",
+                            pointHighlightFill: "#fff",
+                            pointHighlightStroke: "rgba(220,220,220,1)",                           
+                            data: line_values
+
+                        }                        
+                    ]
+                };
+                var myNewChart = new Chart(ctx, {
+                    type: "line",
+                    data: dat,
+                });
+            }
+        });
+      
+        
+        $.ajax({
+            type: "POST",
+            url: "/getVisualtionCountNeighborhood",
+            dataType: 'json',
+            data: JSON.stringify(server_data),
+            contentType: "application/json",
+            success: function (data) {               
+                const line_labels = [];
+                const line_values = [];                               
+                $.each(data, function (i, item) {
+                    line_labels.push(item.neighborhood);
+                    line_values.push(item.deals);
+                });
+                $('#canvas2').remove();              
+                $('#VisulationCount').append('<canvas id="canvas2" width=100 height=40 />');
+                var ctx = document.getElementById("canvas2");                                
+                var dat = {                    
+                    labels: line_labels,
+                    datasets: [
+                        {                            
+                            label: "Chart for Count deals by Neighborhood",
+                            fill: false,
+                            lineTension: 0.1,
+                            backgroundColor: "rgba(75,192,192,0.4)",
+                            borderColor: "rgba(75,192,192,1)",
+                            borderCapStyle: 'butt',
+                            borderDash: [],
+                            borderDashOffset: 0.0,
+                            borderJoinStyle: 'miter',
+                            pointBorderColor: "rgba(75,192,192,1)",
+                            pointBackgroundColor: "#fff",
+                            pointBorderWidth: 1,
+                            pointHoverRadius: 5,
+                            pointHoverBackgroundColor: "rgba(75,192,192,1)",
+                            pointHoverBorderColor: "rgba(220,220,220,1)",
+                            pointHoverBorderWidth: 2,
+                            pointRadius: 1,
+                            pointHitRadius: 10,
+                            data: line_values,
+                            spanGaps: false,
+                        }                        
+                    ]
+                };
+                var myNewChart = new Chart(ctx, {
+                    type: "bar",
+                    data: dat,
+                });
+            }
+        });
+
+        
+        $.ajax({
+            type: "POST",
+            url: "/getVisualtionCountCity",
+            dataType: 'json',
+            data: JSON.stringify(server_data),
+            contentType: "application/json",
+            success: function (data) {               
+                const line_labels = [];
+                const line_values = [];                               
+                $.each(data, function (i, item) {
+                    line_labels.push(item.city);
+                    line_values.push(item.deals);
+                });
+                $('#canvas3').remove();              
+                $('#VisualtionCountCity').append('<canvas id="canvas3" width=100 height=40 />');
+                var ctx = document.getElementById("canvas3");                                
+                var dat = {                    
+                    labels: line_labels,
+                    datasets: [
+                        {                            
+                            label: "Chart for Count deals by City ",
+                            fill: false,
+                            lineTension: 0.1,
+                            backgroundColor: "rgba(224,102,102, 0.4)",
+                            borderColor: "rgba(224,102,102, 0.8)",
+                            borderCapStyle: 'butt',
+                            borderDash: [],
+                            borderDashOffset: 0.0,
+                            borderJoinStyle: 'miter',
+                            pointBorderColor: "rgba(224,102,102, 0.8)",
+                            pointBackgroundColor: "#fff",
+                            pointBorderWidth: 1,
+                            pointHoverRadius: 5,
+                            pointHoverBackgroundColor: "rgba(224,102,102, 0.8))",
+                            pointHoverBorderColor: "rgba(220,220,220,1)",
+                            pointHoverBorderWidth: 2,
+                            pointRadius: 1,
+                            pointHitRadius: 10,
+                            data: line_values,
+                            spanGaps: false,
+                        }                        
+                    ]
+                };
+                var myNewChart = new Chart(ctx, {
+                    type: "bar",
+                    data: dat,
+                });
+            }
+        });
+
+
+    });
+
+    function Load_City() {
+        var cityElement = document.getElementById('city');
+        $.ajax({
+            type: "POST",
+            url: "/getCity",
+            dataType: 'json',
+            //data: JSON.stringify(server_data),
+            contentType: "application/json",
+            success: function (data) {
+                //$.each(JSON.parse(data), function (i, item) {
+                $.each(data, function (i, item) {
+                    //alert (item.id);
+                    //alert (item.cityName);
+                    cityElement.add(new Option(item.cityName));
+                });
+            }
+        });
+    }
+
+
+    ///////////////////////////////////////////////////////////////
+    $("#city").change(function (e) {
+        e.preventDefault();
+        var nElement = document.getElementById('neighborhood');
+        Remove_options();
+        var selectedCity = $("#city  option:selected").val();
+        //alert(selectedCity);
+        var server_data = [
+            { "city": selectedCity },
+        ];
+        $.ajax({
+            type: "POST",
+            url: "/getNeighborhoodByCityName",
+            dataType: 'json',
+            data: JSON.stringify(server_data),
+            contentType: "application/json",
+            success: function (data) {
+                //alert(data);
+                //$.each(JSON.parse(data), function (i, item) {
+                $.each(data, function (i, item) {
+                    //alert (item.id);
+                    //alert (item.cityName);
+                    nElement.add(new Option(item.neighborhoodName));
+                });
+            }
+        });
+    });
+
+    function Remove_options() {
+        $('#neighborhood')
+            .empty()
+            .append('<option value="test" disabled hidden selected>أختر الحي</option>');
+    }
+</script>
+{% endblock %}
